@@ -1,0 +1,6 @@
+data
+node_modules
+novelsPages
+.env
+.idea
+package-lock.json
