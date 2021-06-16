@@ -1,21 +1,14 @@
 import cherio from "cherio";
 import chalk from "chalk";
-import { slugify } from "transliteration";
+import slugify from "slugify";
 
 import { arrayFromLength } from "./helpers/common";
 import { PuppeteerHandler } from "./helpers/puppeteer";
 import queue from "async/queue";
-import {
-  getNovelsUrlsList,
-  mergeNovelsUrls,
-  saveNovelChapter,
-  saveNovelData,
-  saveNovelList,
-} from "./handlers/fileManager";
-import { getLastPage } from "./getNovelsUrls";
+import { getNovelsUrlsList, saveNovelData } from "./handlers/fileManager";
 
 export const baseUrl = "https://novelfull.com";
-const concurrency = 5;
+const concurrency = 8;
 const startTime = new Date();
 
 export const p = new PuppeteerHandler();
@@ -71,8 +64,17 @@ const getNovelsData = async (url) => {
   try {
     const pageContent = await p.getPageContent(url);
     const $ = cherio.load(pageContent);
-    const novelsItems = { title: "", slug: "", genres: [], chapters: [] };
-    let maxChapterPage = getLastPage(pageContent);
+    const novelsItems = {
+      title: "",
+      slug: "",
+      coverImg: "",
+      description: "",
+      genres: [],
+      chaptersUrls: [],
+      chapters: [],
+      chaptersSlugs: [],
+    };
+
     let firstChapterUrl = "";
 
     $(".col-info-desc h3.title").each((i, header) => {
@@ -85,16 +87,30 @@ const getNovelsData = async (url) => {
       const title = $(header).text();
       novelsItems.genres.push(title);
     });
+
+    $(".books .book img").each((i, header) => {
+      novelsItems.coverImg = baseUrl + $(header).attr("src");
+    });
+
+    $(".desc-text p").each((i, header) => {
+      novelsItems.description += $.html(header);
+    });
+
     $(
       "#list-chapter .row .col-xs-12:first-child .list-chapter:first-child li:first-child a"
     ).each((i, header) => {
       firstChapterUrl = baseUrl + $(header).attr("href");
     });
-    novelsItems.chapters = await getChaptersUrls(firstChapterUrl);
-    await saveNovelData(novelsItems);
-    for await (const chapterData of novelsItems.chapters) {
-      await getChapter(novelsItems.slug, chapterData);
+    novelsItems.chaptersUrls = await getChaptersUrls(firstChapterUrl);
+    for await (const chapterData of novelsItems.chaptersUrls) {
+      const chapterContent = await getChapter(novelsItems.slug, chapterData);
+      novelsItems.chapters.push(chapterContent);
+      novelsItems.chaptersSlugs.push({
+        slug: chapterData.slug,
+        order: novelsItems.chaptersSlugs.length,
+      });
     }
+    await saveNovelData(novelsItems);
   } catch (err) {
     console.log(chalk.red("An error has occured \n"));
     console.log(err);
@@ -106,15 +122,18 @@ const getChaptersUrls = async (url) => {
     const pageContent = await p.getChaptersUrls(url);
     const $ = cherio.load(pageContent);
     const chapters = [];
-    $(".form-control.chapter_jump option").each((i, header) => {
-      const url = $(header).val();
-      const title = $(header).text();
-      chapters.push({
-        url: baseUrl + url,
-        title,
-        slug: slugify(title),
+    $(".chapter-nav")
+      .first()
+      .find(".form-control.chapter_jump option")
+      .each((i, header) => {
+        const url = $(header).val();
+        const title = $(header).text();
+        chapters.push({
+          url: baseUrl + url,
+          title,
+          slug: slugify(title),
+        });
       });
-    });
     return chapters;
   } catch (err) {
     console.log(chalk.red("An error has occured \n"));
@@ -131,7 +150,7 @@ const getChapter = async (novelSlug, { url, title, slug }) => {
     $("#chapter-content p").each((i, header) => {
       chapterData.content += $.html(header);
     });
-    await saveNovelChapter(novelSlug, chapterData);
+    return chapterData;
   } catch (err) {
     console.log(chalk.red("An error has occured \n"));
     console.log(err);

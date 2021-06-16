@@ -1,6 +1,6 @@
 import cherio from "cherio";
 import chalk from "chalk";
-import { slugify } from "transliteration";
+import slugify from "slugify";
 
 import { arrayFromLength } from "./helpers/common";
 import { PuppeteerHandler } from "./helpers/puppeteer";
@@ -9,7 +9,7 @@ import { mergeNovelsUrls, saveNovelList } from "./handlers/fileManager";
 import { getNovels } from "./getNovels";
 
 export const baseUrl = "https://novelfull.com";
-const concurrency = 5;
+const concurrency = 2;
 const startTime = new Date();
 
 export const p = new PuppeteerHandler();

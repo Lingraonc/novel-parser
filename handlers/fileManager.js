@@ -126,8 +126,30 @@ export const saveNovelChapter = async (novelSlug, chapterData) => {
       `${chapterPath}/${chapterData.slug}.json`,
       JSON.stringify(chapterData, null, 2)
     );
-     console.log(chalk.blue(`Chapter ${chapterData.slug} saved for novel ${novelSlug}`));
+    console.log(
+      chalk.blue(`Chapter ${chapterData.slug} saved for novel ${novelSlug}`)
+    );
   } catch (err) {
     throw new Error(err);
+  }
+};
+
+export const getNovelsCount = async () => {
+  const novelsPath = path.join(__dirname, "..", "data");
+  return (await fs.readdir(novelsPath)).length;
+};
+
+export const loadNovelsData = async (novelIndex) => {
+  const novelsPath = path.join(__dirname, "..", "data");
+  let folderFiles = await fs.readdir(novelsPath);
+  if (folderFiles.length > 1) {
+    return JSON.parse(
+      await fs.readFile(
+        `${novelsPath}/${folderFiles[novelIndex]}/novelData.json`,
+        "utf8"
+      )
+    );
+  } else {
+    throw new Error(chalk.red("Novels folders not found"));
   }
 };

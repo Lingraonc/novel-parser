@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run clean && babel-node index.js",
     "get-urls": "npm run cleanNovelsPages && babel-node getNovelsUrls.js",
+    "saveData": "babel-node saveDataInFirebase.js",
     "cleanNovelsPages": "rm -rf novelsPages && mkdir novelsPages && npm run clean",
     "clean": "rm -rf data && mkdir data "
   },
@@ -17,11 +17,16 @@
     "@babel/core": "^7.4.5",
     "@babel/node": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
+    "@firebase/database": "^0.10.4",
     "async": "^3.1.0",
     "chalk": "^2.4.2",
     "cherio": "^1.0.0-rc.2",
+    "dotenv": "^10.0.0",
+    "firebase": "^8.6.7",
+    "i": "^0.3.6",
+    "npm": "^7.17.0",
     "prettier": "^2.3.1",
     "puppeteer": "^1.18.1",
-    "transliteration": "^2.1.4"
+    "slugify": "^1.5.3"
   }
 }
