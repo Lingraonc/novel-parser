@@ -18,7 +18,10 @@ export const saveNovelContent = async ({
         genres,
         description,
         coverImg,
-        chaptersSlugs,
+        chaptersSlugs: chaptersSlugs.map(chapterSlugItem => {
+          chapterSlugItem.slug = chapterSlugItem.slug.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, "");
+          return chapterSlugItem;
+          }),
       });
   } catch (err) {
     throw new Error(err);
